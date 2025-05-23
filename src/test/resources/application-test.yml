@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: catalog-service-test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  flyway:
+    enabled: false

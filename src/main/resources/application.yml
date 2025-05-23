@@ -1,0 +1,148 @@
+server:
+  port: 9001
+  shutdown: graceful
+  servlet:
+    context-path: /api/user-service
+  tomcat:
+    connection-timeout: 1s
+    keep-alive-timeout: 15s
+    threads:
+      max: 100
+      min-spare: 20
+    max-connections: 10000
+    accept-count: 100
+    max-swallow-size: 2MB
+    max-http-form-post-size: 2MB
+
+spring:
+  application:
+    name: user-service
+  output:
+    ansi:
+      enabled: always
+  jackson:
+    visibility:
+      getter: none
+      is-getter: none
+      field: any
+      setter: none
+    default-property-inclusion: non_empty
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_db}
+    username: ${DB_USER:user}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    clean-disabled: true
+    out-of-order: true
+    ignore-migration-patterns: '*:ignored'
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      connect-timeout: 2000ms
+      client-type: lettuce
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: user_
+
+management:
+  endpoints:
+    web:
+      base-path: /admin
+      exposure:
+        include: refresh, configprops, env, flyway, health, metrics, heapdump, info, loggers, mappings, prometheus
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+    redis:
+      enabled: true
+    db:
+      enabled: true
+  endpoint:
+    shutdown:
+      access: unrestricted
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: db, redis, diskSpace
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    root: INFO
+    com.xeppelin: ${LOG_LEVEL:INFO}
+    org.springframework: INFO
+    org.hibernate: INFO
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    filter: true
+    display-request-duration: true
+    display-operation-id: true
+    show-extensions: true
+    show-common-extensions: true
+    default-models-expand-depth: 1
+    default-model-expand-depth: 1
+    doc-expansion: none
+    persist-authorization: true
+    config-url: /v3/api-docs/swagger-config
+    url: /v3/api-docs
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+    resolve-schema-properties: true
+  show-actuator: false
+  group-configs:
+    - group: 'user-management'
+      display-name: 'User Management API'
+      paths-to-match: '/users/**'
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  writer-with-default-pretty-printer: true

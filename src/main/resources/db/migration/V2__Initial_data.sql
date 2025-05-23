@@ -1,0 +1,43 @@
+-- Initial data for users table
+INSERT INTO users (id, name, email, role, status, created_by, created_date, last_modified_by, last_modified_date, version) VALUES
+-- Admin users
+('550e8400-e29b-41d4-a716-446655440001', 'Admin User', 'admin@xeppelin.com', 'ADMIN', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440002', 'Super Admin', 'superadmin@xeppelin.com', 'ADMIN', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+
+-- Organizer users
+('550e8400-e29b-41d4-a716-446655440003', 'John Organizer', 'john.organizer@xeppelin.com', 'ORGANIZER', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440004', 'Maria Rodriguez', 'maria.rodriguez@xeppelin.com', 'ORGANIZER', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440005', 'David Wilson', 'david.wilson@xeppelin.com', 'ORGANIZER', 'INACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+
+-- Staff users
+('550e8400-e29b-41d4-a716-446655440006', 'Alice Staff', 'alice.staff@xeppelin.com', 'STAFF', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440007', 'Bob Support', 'bob.support@xeppelin.com', 'STAFF', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440008', 'Carol Helper', 'carol.helper@xeppelin.com', 'STAFF', 'SUSPENDED', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+
+-- Attendee users
+('550e8400-e29b-41d4-a716-446655440009', 'Mike Attendee', 'mike.attendee@gmail.com', 'ATTENDEE', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440010', 'Sarah Johnson', 'sarah.johnson@yahoo.com', 'ATTENDEE', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440011', 'Tom Brown', 'tom.brown@hotmail.com', 'ATTENDEE', 'ACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('550e8400-e29b-41d4-a716-446655440012', 'Emma Davis', 'emma.davis@outlook.com', 'ATTENDEE', 'INACTIVE', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0);
+
+-- Initial data for addresses table
+INSERT INTO addresses (id, user_id, address_line1, address_line2, city, state, postal_code, country, phone_number, created_by, created_date, last_modified_by, last_modified_date, version) VALUES
+-- Admin addresses
+('650e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', '123 Admin Street', 'Suite 100', 'New York', 'NY', '10001', 'USA', '+1-555-0101', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', '456 Executive Ave', NULL, 'Los Angeles', 'CA', '90210', 'USA', '+1-555-0102', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+
+-- Organizer addresses
+('650e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', '789 Event Plaza', 'Floor 5', 'Chicago', 'IL', '60601', 'USA', '+1-555-0103', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004', '321 Conference Blvd', 'Unit 25', 'Miami', 'FL', '33101', 'USA', '+1-555-0104', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440005', '654 Meeting Street', NULL, 'Seattle', 'WA', '98101', 'USA', '+1-555-0105', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+
+-- Staff addresses
+('650e8400-e29b-41d4-a716-446655440006', '550e8400-e29b-41d4-a716-446655440006', '147 Support Lane', 'Apt 12', 'Boston', 'MA', '02101', 'USA', '+1-555-0106', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440007', '550e8400-e29b-41d4-a716-446655440007', '258 Helper Road', NULL, 'Denver', 'CO', '80201', 'USA', '+1-555-0107', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440008', '550e8400-e29b-41d4-a716-446655440008', '369 Service Drive', 'Building B', 'Austin', 'TX', '73301', 'USA', NULL, 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+
+-- Attendee addresses
+('650e8400-e29b-41d4-a716-446655440009', '550e8400-e29b-41d4-a716-446655440009', '741 Participant Way', NULL, 'Phoenix', 'AZ', '85001', 'USA', '+1-555-0109', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440010', '852 Visitor Circle', 'Apt 5A', 'Portland', 'OR', '97201', 'USA', '+1-555-0110', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440011', '963 Guest Boulevard', NULL, 'Nashville', 'TN', '37201', 'USA', '+1-555-0111', 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0),
+('650e8400-e29b-41d4-a716-446655440012', '550e8400-e29b-41d4-a716-446655440012', '159 Customer Street', 'Unit 3', 'Atlanta', 'GA', '30301', 'USA', NULL, 'SYSTEM', CURRENT_TIMESTAMP, 'SYSTEM', CURRENT_TIMESTAMP, 0);
