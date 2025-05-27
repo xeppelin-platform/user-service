@@ -2,6 +2,8 @@ package com.xeppelin.userservice.infrastructure.adapter.output.persistence.adapt
 
 import com.xeppelin.userservice.application.port.output.UserRepository;
 import com.xeppelin.userservice.domain.model.User;
+import com.xeppelin.userservice.domain.model.UserRole;
+import com.xeppelin.userservice.domain.model.UserStatus;
 import com.xeppelin.userservice.infrastructure.adapter.output.persistence.mapper.PersistenceMapper;
 import com.xeppelin.userservice.infrastructure.adapter.output.persistence.repository.UserJpaRepository;
 import java.util.Optional;
@@ -48,6 +50,21 @@ public class UserPersistenceAdapter implements UserRepository {
     public Page<User> findAll(Pageable pageable) {
         return userJpaRepository.findAll(pageable)
             .map(persistenceMapper::fromUserEntityToUser);
+    }
+
+    @Override
+    public Page<User> findByRole(UserRole role, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public Page<User> findByRoleAndStatus(UserRole role, UserStatus status, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+        return false;
     }
 
     @Override

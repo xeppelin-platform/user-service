@@ -479,6 +479,435 @@ Run:
 docker-compose up -d
 ```
 
+## 🐳 Docker Guide
+
+This section provides a comprehensive guide to build, run, and manage the User Service Docker image.
+
+### Prerequisites
+
+- **Docker 20.10+** installed and running
+- **Docker Compose 2.0+** (for multi-container setup)
+- **Java 21** (for local builds)
+
+### Building Docker Image
+
+#### Method 1: Using Gradle (Recommended)
+
+Spring Boot provides built-in support for creating optimized Docker images using Cloud Native Buildpacks:
+
+```bash
+# Navigate to user-service directory
+cd user-service
+
+# Build Docker image with default name
+./gradlew bootBuildImage
+
+# Build with custom image name and tag
+./gradlew bootBuildImage --imageName=xeppelin/user-service:latest
+
+# Build with specific tag version
+./gradlew bootBuildImage --imageName=xeppelin/user-service:1.0.0
+```
+
+**Image Details:**
+- **Base Image**: `paketobuildpacks/run:base-cnb` (optimized for Spring Boot)
+- **Size**: ~300MB (layered and optimized)
+- **Architecture**: linux/amd64
+- **JVM**: Eclipse Temurin 21
+
+#### Method 2: Using Dockerfile
+
+Create a `Dockerfile` in the user-service root directory:
+
+```dockerfile
+# Multi-stage build for optimization
+FROM gradle:8.13-jdk21 AS builder
+
+WORKDIR /app
+COPY build.gradle settings.gradle ./
+COPY gradle gradle
+COPY src src
+
+# Build the application
+RUN gradle bootJar --no-daemon
+
+# Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+
+# Create application user for security
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Set working directory
+WORKDIR /app
+
+# Copy JAR from builder stage
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Change ownership to app user
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+# Expose port
+EXPOSE 9001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9001/api/user-service/actuator/health || exit 1
+
+# Run application
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+Build the image:
+
+```bash
+# Build with Dockerfile
+docker build -t xeppelin/user-service:latest .
+
+# Build with specific context and tag
+docker build -t xeppelin/user-service:1.0.0 -f Dockerfile .
+```
+
+### Running Docker Container
+
+#### Standalone Container
+
+```bash
+# Run with default configuration
+docker run -p 9001:9001 xeppelin/user-service:latest
+
+# Run with environment variables
+docker run -p 9001:9001 \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=5432 \
+  -e DB_NAME=user_db \
+  -e DB_USER=user \
+  -e DB_PASSWORD=password \
+  -e REDIS_HOST=host.docker.internal \
+  -e REDIS_PORT=6379 \
+  xeppelin/user-service:latest
+
+# Run in background (detached mode)
+docker run -d -p 9001:9001 --name user-service xeppelin/user-service:latest
+
+# Run with custom JVM options
+docker run -p 9001:9001 \
+  -e JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC" \
+  xeppelin/user-service:latest
+```
+
+#### Using Docker Compose (Complete Stack)
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: user-service-postgres
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - user-service-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d user_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: user-service-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - user-service-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: redis-server --appendonly yes
+
+  # User Service Application
+  user-service:
+    image: xeppelin/user-service:latest
+    container_name: user-service-app
+    ports:
+      - "9001:9001"
+    environment:
+      # Database configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: user_db
+      DB_USER: user
+      DB_PASSWORD: password
+      
+      # Redis configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: docker
+      
+      # JVM tuning
+      JAVA_OPTS: >-
+        -Xms512m 
+        -Xmx1024m 
+        -XX:+UseG1GC 
+        -XX:MaxGCPauseMillis=200
+        -Dspring.jpa.show-sql=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - user-service-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/api/user-service/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  user-service-network:
+    driver: bridge
+```
+
+**Start the complete stack:**
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f user-service
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes
+docker-compose down -v
+```
+
+### Docker Commands Reference
+
+#### Image Management
+
+```bash
+# List Docker images
+docker images
+
+# Remove image
+docker rmi xeppelin/user-service:latest
+
+# Pull image from registry
+docker pull xeppelin/user-service:latest
+
+# Tag image
+docker tag xeppelin/user-service:latest xeppelin/user-service:1.0.0
+
+# Push to registry (if you have access)
+docker push xeppelin/user-service:latest
+
+# Inspect image details
+docker inspect xeppelin/user-service:latest
+
+# View image history/layers
+docker history xeppelin/user-service:latest
+```
+
+#### Container Management
+
+```bash
+# List running containers
+docker ps
+
+# List all containers
+docker ps -a
+
+# Stop container
+docker stop user-service
+
+# Start stopped container
+docker start user-service
+
+# Restart container
+docker restart user-service
+
+# Remove container
+docker rm user-service
+
+# View container logs
+docker logs user-service
+
+# Follow logs in real-time
+docker logs -f user-service
+
+# Execute command in running container
+docker exec -it user-service bash
+
+# View container resource usage
+docker stats user-service
+```
+
+#### Troubleshooting
+
+```bash
+# Check container health
+docker inspect user-service | grep -A 10 '"Health"'
+
+# View detailed container information
+docker inspect user-service
+
+# Check port bindings
+docker port user-service
+
+# View container processes
+docker top user-service
+
+# Copy files from container
+docker cp user-service:/app/logs ./local-logs
+
+# View container filesystem changes
+docker diff user-service
+```
+
+### Docker Registry
+
+#### Pushing to Registry
+
+```bash
+# Login to Docker Hub (or your registry)
+docker login
+
+# Tag for registry
+docker tag xeppelin/user-service:latest your-registry/xeppelin/user-service:latest
+
+# Push to registry
+docker push your-registry/xeppelin/user-service:latest
+```
+
+#### Pulling from Registry
+
+```bash
+# Pull specific version
+docker pull your-registry/xeppelin/user-service:1.0.0
+
+# Pull latest version
+docker pull your-registry/xeppelin/user-service:latest
+```
+
+### Performance Optimization
+
+#### Memory Settings
+
+```bash
+# Run with optimized memory settings
+docker run -p 9001:9001 \
+  -e JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0" \
+  xeppelin/user-service:latest
+```
+
+#### Resource Limits
+
+```bash
+# Run with resource constraints
+docker run -p 9001:9001 \
+  --memory=1g \
+  --cpus=1.0 \
+  --memory-swap=1g \
+  xeppelin/user-service:latest
+```
+
+### Security Best Practices
+
+The Docker image includes several security measures:
+
+- **Non-root user**: Application runs as `appuser` (UID 1001)
+- **Minimal base image**: Uses Alpine Linux for smaller attack surface
+- **Health checks**: Built-in health monitoring
+- **No secrets in image**: Environment variables for sensitive data
+- **Read-only filesystem**: Application directory is read-only
+
+### Environment Configuration
+
+Create a `.env` file for environment variables:
+
+```bash
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=user_db
+DB_USER=user
+DB_PASSWORD=secure_password
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# Application
+SPRING_PROFILES_ACTIVE=docker
+SERVER_PORT=9001
+
+# JVM
+JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC
+```
+
+Use with Docker Compose:
+
+```bash
+docker-compose --env-file .env up -d
+```
+
+### Quick Start Commands
+
+```bash
+# Complete setup from scratch
+git clone <repository-url>
+cd Xeppelin-Platform/user-service
+
+# Build image
+./gradlew bootBuildImage --imageName=xeppelin/user-service:latest
+
+# Start with Docker Compose
+docker-compose up -d
+
+# Verify service is running
+curl http://localhost:9001/api/user-service/actuator/health
+
+# View logs
+docker-compose logs -f user-service
+
+# Access Swagger UI
+open http://localhost:9001/api/user-service/swagger-ui.html
+```
+
 ## 📚 API Documentation
 
 ### Swagger UI
