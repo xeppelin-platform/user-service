@@ -5,14 +5,10 @@ on:
     branches:
       - master
       - develop
-    paths:
-      - 'user-service/**'
   pull_request:
     branches:
       - master
       - develop
-    paths:
-      - 'user-service/**'
 
 env:
   SERVICE_NAME: user-service
