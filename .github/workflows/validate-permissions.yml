@@ -1,0 +1,55 @@
+name: Validate Permissions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ develop ]
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  validate-permissions:
+    name: Validate GitHub Actions Permissions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check GITHUB_TOKEN permissions
+        run: |
+          echo "## GitHub Token Permissions Check" >> $GITHUB_STEP_SUMMARY
+          echo "Token: ${{ secrets.GITHUB_TOKEN != '' && 'Available' || 'Not Available' }}" >> $GITHUB_STEP_SUMMARY
+          echo "Repository: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "Event: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "Actor: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Test API access
+        run: |
+          echo "Testing GitHub API access..."
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/${{ github.repository }}/actions/permissions
+               
+      - name: Create dummy test file
+        run: |
+          mkdir -p test-results
+          cat > test-results/TEST-dummy.xml << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="DummyTest" tests="1" failures="0" errors="0" time="0.001">
+            <testcase name="dummyTest" classname="com.example.DummyTest" time="0.001"/>
+          </testsuite>
+          EOF
+
+      - name: Test dorny/test-reporter
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Permission Test Results
+          path: test-results/TEST-*.xml
+          reporter: java-junit
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true 

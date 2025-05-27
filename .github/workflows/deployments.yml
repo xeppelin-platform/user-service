@@ -10,6 +10,13 @@ on:
       - master
       - develop
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
 env:
   SERVICE_NAME: user-service
   JAVA_VERSION: '21'
@@ -70,6 +77,30 @@ jobs:
           name: Test Results
           path: build/test-results/test/TEST-*.xml
           reporter: java-junit
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Continue even if test-reporter fails
+      - name: Test Summary (Fallback)
+        if: (success() || failure()) && always()
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f build/test-results/test/TEST-*.xml ]; then
+            echo "✅ Test result files found" >> $GITHUB_STEP_SUMMARY
+            TEST_COUNT=$(find build/test-results/test -name "TEST-*.xml" -exec grep -h "tests=" {} \; | grep -o 'tests="[0-9]*"' | cut -d'"' -f2 | paste -sd+ | bc)
+            FAILURE_COUNT=$(find build/test-results/test -name "TEST-*.xml" -exec grep -h "failures=" {} \; | grep -o 'failures="[0-9]*"' | cut -d'"' -f2 | paste -sd+ | bc)
+            ERROR_COUNT=$(find build/test-results/test -name "TEST-*.xml" -exec grep -h "errors=" {} \; | grep -o 'errors="[0-9]*"' | cut -d'"' -f2 | paste -sd+ | bc)
+            
+            echo "- **Total Tests**: $TEST_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **Failures**: $FAILURE_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **Errors**: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$FAILURE_COUNT" -eq 0 ] && [ "$ERROR_COUNT" -eq 0 ]; then
+              echo "- **Status**: ✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Status**: ❌ Some tests failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ No test result files found" >> $GITHUB_STEP_SUMMARY
+          fi
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()

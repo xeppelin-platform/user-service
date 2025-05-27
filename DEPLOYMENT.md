@@ -179,17 +179,36 @@ The application includes Spring Boot Actuator endpoints:
    - Update vulnerable dependencies
    - Add suppressions for false positives
 
+4. **Test Reporter Permission Issues**
+   - **Error**: `Resource not accessible by integration`
+   - **Cause**: Missing GitHub Actions permissions for creating check runs
+   - **Solutions**:
+     - Ensure repository has proper permissions configuration
+     - Check if `GITHUB_TOKEN` has `checks: write` permission
+     - Verify the workflow has the correct permissions block:
+       ```yaml
+       permissions:
+         contents: read
+         actions: read
+         checks: write
+         pull-requests: write
+         security-events: write
+       ```
+     - For forks or restricted repositories, the test results will still be available as artifacts
+     - Use the validation workflow (`validate-permissions.yml`) to diagnose permission issues
+
+5. **Cache not working properly**
+   - Clear GitHub Actions cache manually if needed
+   - Verify cache keys are properly configured
+   - Check Gradle daemon is not consuming too much memory
+
 ### Getting Help
 
 - Check GitHub Actions logs for detailed error messages
-- Review test reports and coverage artifacts
+- Review test reports and coverage artifacts (available even without test-reporter)
 - Consult application logs from container runtime
+- Use the permission validation workflow for troubleshooting access issues
 
 ## Release Process
 
-1. Create a feature branch from `develop`
-2. Make changes and ensure tests pass
-3. Create a pull request to `develop`
-4. After review and merge, pipeline deploys to staging
-5. Create a pull request from `develop` to `master/main`
-6. After review and merge, pipeline deploys to production 
+1. Create a feature branch from `
