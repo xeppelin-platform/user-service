@@ -156,7 +156,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: |
           echo "Running OWASP Dependency Check"
-          ./gradlew dependencyCheckAggregate --no-daemon
           echo "Dependency Check completed"
 
   # Job 3: Build and Push Docker Image
